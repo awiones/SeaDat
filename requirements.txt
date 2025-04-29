@@ -1,0 +1,5 @@
+colorama
+tabulate
+pandas
+requests
+openpyxl
