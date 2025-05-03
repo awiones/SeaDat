@@ -13,7 +13,6 @@ SeaDat is a free tool designed to showcase how one could search, analyze, and vi
 - **AI Search:** Use natural language queries powered by GPT-4o (via aimlapi.com) to find and analyze data.
 - **IP Address Tracker:** Lookup IP address information, including geolocation and network details.
 - **Instagram Profile Lookup:** Retrieve public Instagram profile information using multiple scraping methods.
-- **Excel to CSV Converter:** Easily convert `.xlsx` files to `.csv` for use with the tool.
 
 ---
 
