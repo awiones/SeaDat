@@ -2,4 +2,13 @@
 data_dummy.xlsx
 _pyccache_
 .pyc
+venv/
 venv
+data.xlsx
+ip_track_history.json
+_pyccache_
+.pyc
+__pycache__/
+__pycache__
+*.py[cod]
+.env

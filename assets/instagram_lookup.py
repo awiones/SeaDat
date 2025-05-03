@@ -1,3 +1,4 @@
+
 import requests
 import re
 import json
@@ -151,6 +152,8 @@ def fetch_instagram_profile(username):
         
         if "error" not in profile_data:
             print(Fore.GREEN + f"Success with method: {method_name}")
+            # Extract email from profile data
+            profile_data["email"] = extract_email_from_profile(profile_data)
             return profile_data
         
         errors.append(f"{method_name}: {profile_data['error']}")
@@ -161,6 +164,85 @@ def fetch_instagram_profile(username):
         "error": "All methods failed to retrieve profile data",
         "details": errors
     }
+
+def extract_email_from_profile(profile_data):
+    """
+    Extract potential email addresses from profile data.
+    Searches in bio, website, and other available fields.
+    """
+    # Common email regex pattern
+    email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+    
+    # Places to look for emails
+    sources = []
+    
+    # Check bio
+    if profile_data.get('bio'):
+        sources.append(profile_data['bio'])
+    
+    # Check website/URL
+    if profile_data.get('url'):
+        sources.append(profile_data['url'])
+    
+    # Check full name (sometimes people put emails there)
+    if profile_data.get('full_name'):
+        sources.append(profile_data['full_name'])
+    
+    # Look for emails in all sources
+    found_emails = []
+    for source in sources:
+        if source:
+            emails = re.findall(email_pattern, source)
+            found_emails.extend(emails)
+    
+    # Remove duplicates and return
+    unique_emails = list(set(found_emails))
+    
+    # If no emails found in profile data, try to construct potential email
+    if not unique_emails:
+        potential_emails = generate_potential_emails(profile_data)
+        if potential_emails:
+            return {"found": [], "potential": potential_emails}
+        return {"found": [], "potential": []}
+    
+    return {"found": unique_emails, "potential": generate_potential_emails(profile_data)}
+
+def generate_potential_emails(profile_data):
+    """
+    Generate potential email addresses based on username and full name.
+    """
+    if not profile_data.get('username'):
+        return []
+    
+    username = profile_data.get('username')
+    full_name = profile_data.get('full_name', '')
+    
+    potential_emails = []
+    
+    # Common email domains
+    domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com']
+    
+    # Add username@domain.com variations
+    for domain in domains:
+        potential_emails.append(f"{username}@{domain}")
+    
+    # If full name exists, create variations
+    if full_name:
+        # Remove special characters and split
+        name_parts = re.sub(r'[^\w\s]', '', full_name).split()
+        
+        if len(name_parts) >= 2:
+            first_name = name_parts[0].lower()
+            last_name = name_parts[-1].lower()
+            
+            # Common name combinations
+            for domain in domains:
+                potential_emails.append(f"{first_name}.{last_name}@{domain}")
+                potential_emails.append(f"{first_name}{last_name}@{domain}")
+                potential_emails.append(f"{first_name[0]}{last_name}@{domain}")
+                potential_emails.append(f"{first_name}{last_name[0]}@{domain}")
+    
+    return list(set(potential_emails))
 
 def fetch_via_api_endpoint(username, session, proxies=None):
     """Try fetching profile using the API endpoint."""
@@ -478,6 +560,29 @@ def extract_user_data(data):
     elif "following" in user:
         result["total_following"] = user["following"]
     
+    # Look for contact information if available
+    if "business_email" in user and user["business_email"]:
+        result["business_email"] = user["business_email"]
+    
+    if "public_email" in user and user["public_email"]:
+        result["public_email"] = user["public_email"]
+    
+    if "contact_phone_number" in user and user["contact_phone_number"]:
+        result["contact_phone"] = user["contact_phone_number"]
+    
+    # Check for business contact info
+    if "business_contact_method" in user:
+        result["business_contact_method"] = user["business_contact_method"]
+    
+    # Check for public contact info in business settings
+    if "business_address_json" in user and user["business_address_json"]:
+        try:
+            address_data = json.loads(user["business_address_json"])
+            if address_data and isinstance(address_data, dict):
+                result["business_address"] = address_data
+        except:
+            pass
+    
     return result
 
 def run_instagram_lookup():
@@ -520,11 +625,303 @@ def run_instagram_lookup():
             print(Fore.WHITE + f"Verified: {Fore.YELLOW}{info.get('is_verified')}")
             print(Fore.WHITE + f"Business: {Fore.YELLOW}{info.get('is_business')}")
             print(Fore.WHITE + f"Profile Picture: {Fore.YELLOW}{info.get('profile_pic_url')}")
+            
+            # Display business email if available
+            if info.get('business_email'):
+                print(Fore.WHITE + f"Business Email: {Fore.GREEN}{info.get('business_email')}")
+            
+            # Display public email if available
+            if info.get('public_email'):
+                print(Fore.WHITE + f"Public Email: {Fore.GREEN}{info.get('public_email')}")
+            
+            # Display contact phone if available
+            if info.get('contact_phone'):
+                print(Fore.WHITE + f"Contact Phone: {Fore.YELLOW}{info.get('contact_phone')}")
+            
+
+            # Display emails found in profile data
+            if info.get('email'):
+                email_data = info.get('email')
+                if email_data.get('found') and len(email_data['found']) > 0:
+                    print(Fore.WHITE + f"Emails found: {Fore.GREEN}{', '.join(email_data['found'])}")
+                
+                if email_data.get('potential') and len(email_data['potential']) > 0:
+                    print(Fore.WHITE + f"Potential emails: {Fore.YELLOW}{', '.join(email_data['potential'][:5])}")
+                    if len(email_data['potential']) > 5:
+                        print(Fore.WHITE + f"  ...and {len(email_data['potential']) - 5} more potential emails")
+            
+            # Display business address if available
+            if info.get('business_address'):
+                print(Fore.WHITE + f"Business Address: {Fore.YELLOW}{json.dumps(info.get('business_address'))}")
         
-        print(Fore.BLUE + "~" * 50)
-        next_action = input(Fore.CYAN + "\n[Enter] Lookup another | b: Back to menu\n" + Fore.BLUE + "≈≈≈> " + Fore.WHITE).strip().lower()
-        if next_action == 'b':
+        print("\n" + Fore.BLUE + "~" * 50)
+        
+        # Ask if user wants to search for email by IP
+        print(Fore.CYAN + "Would you like to search for email addresses associated with an IP? (y/n)")
+        choice = input(Fore.BLUE + "≈≈≈> " + Fore.WHITE).strip().lower()
+        if choice == 'y':
+            search_email_by_ip(info.get('username'))
+        
+        print(Fore.CYAN + "\nPress Enter to continue or type 'back' to return:")
+        choice = input(Fore.BLUE + "≈≈≈> " + Fore.WHITE).strip().lower()
+        if choice == 'back':
             return
+
+def search_email_by_ip(username):
+    """Search for email addresses associated with an IP address."""
+    print(Fore.CYAN + "\nEnter IP address to search for associated emails:")
+    ip_address = input(Fore.BLUE + "≈≈≈> " + Fore.WHITE).strip()
+    
+    if not ip_address:
+        print(Fore.YELLOW + "No IP address provided.")
+        return
+    
+    # Validate IP address format
+    ip_pattern = r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$'
+    if not re.match(ip_pattern, ip_address):
+        print(Fore.RED + "Invalid IP address format. Please use format: xxx.xxx.xxx.xxx")
+        return
+    
+    print(Fore.CYAN + f"🌊 Searching for emails associated with IP: {ip_address}, please wait...")
+    
+    # Create a session for requests
+    session = requests.Session()
+    
+    # Try multiple email lookup services
+    email_results = []
+    
+    # Method 1: Try using a reverse DNS lookup first
+    try:
+        print(Fore.CYAN + "Attempting reverse DNS lookup...")
+        import socket
+        hostname = socket.gethostbyaddr(ip_address)[0]
+        if hostname:
+            print(Fore.GREEN + f"Found hostname: {hostname}")
+            email_results.append(f"Domain: {hostname}")
+            
+            # Extract domain for potential email construction
+            domain_parts = hostname.split('.')
+            if len(domain_parts) >= 2:
+                domain = f"{domain_parts[-2]}.{domain_parts[-1]}"
+                potential_emails = [
+                    f"admin@{domain}",
+                    f"info@{domain}",
+                    f"contact@{domain}",
+                    f"support@{domain}"
+                ]
+                if username:
+                    potential_emails.append(f"{username}@{domain}")
+                
+                email_results.append(f"Potential emails for domain {domain}:")
+                for email in potential_emails:
+                    email_results.append(f"  - {email}")
+    except Exception as e:
+        print(Fore.YELLOW + f"Reverse DNS lookup failed: {str(e)}")
+    
+    # Method 2: Try using email lookup APIs
+    email_lookup_services = [
+        {
+            "name": "IPinfo.io",
+            "url": f"https://ipinfo.io/{ip_address}/json",
+            "headers": {"User-Agent": get_random_user_agent()},
+            "extract": lambda data: extract_email_from_ipinfo(data)
+        },
+        {
+            "name": "AbuseIPDB",
+            "url": f"https://api.abuseipdb.com/api/v2/check",
+            "params": {"ipAddress": ip_address, "maxAgeInDays": 90},
+            "headers": {
+                "Key": "YOUR_API_KEY",  # Replace with your API key
+                "Accept": "application/json"
+            },
+            "extract": lambda data: extract_email_from_abuseipdb(data)
+        }
+    ]
+    
+    for service in email_lookup_services:
+        try:
+            print(Fore.CYAN + f"Trying {service['name']}...")
+            
+            # Skip if API key is needed but not provided
+            if "YOUR_API_KEY" in str(service.get('headers', {})):
+                print(Fore.YELLOW + f"Skipping {service['name']} - API key required")
+                continue
+                
+            resp = make_request(
+                session, 
+                service['url'], 
+                headers=service.get('headers'), 
+                params=service.get('params')
+            )
+            
+            if isinstance(resp, dict) and "error" in resp:
+                print(Fore.YELLOW + f"{service['name']} error: {resp['error']}")
+                continue
+                
+            if resp.status_code != 200:
+                print(Fore.YELLOW + f"{service['name']} returned status code {resp.status_code}")
+                continue
+                
+            data = resp.json()
+            results = service['extract'](data)
+            
+            if results:
+                print(Fore.GREEN + f"Found information from {service['name']}")
+                email_results.extend(results)
+            else:
+                print(Fore.YELLOW + f"No email information found from {service['name']}")
+                
+        except Exception as e:
+            print(Fore.YELLOW + f"Error with {service['name']}: {str(e)}")
+    
+    # Method 3: Check WHOIS information
+    try:
+        print(Fore.CYAN + "Checking WHOIS information...")
+        whois_results = check_whois_for_email(ip_address)
+        if whois_results:
+            email_results.extend(whois_results)
+    except Exception as e:
+        print(Fore.YELLOW + f"WHOIS lookup error: {str(e)}")
+    
+    # Display results
+    print("\n" + Fore.BLUE + "~" * 50)
+    if email_results:
+        print(Fore.GREEN + f"Results for IP: {ip_address}")
+        for result in email_results:
+            print(Fore.WHITE + result)
+    else:
+        print(Fore.YELLOW + f"No email information found for IP: {ip_address}")
+        
+        # Suggest manual methods
+        print(Fore.CYAN + "\nSuggested manual methods:")
+        print(Fore.WHITE + "1. Try searching this IP in WHOIS databases: whois.com, who.is")
+        print(Fore.WHITE + "2. Check abuse contact information at AbuseIPDB.com")
+        print(Fore.WHITE + "3. Search for the IP address in search engines")
+        print(Fore.WHITE + "4. Check reverse DNS records")
+    
+    print("\n" + Fore.BLUE + "~" * 50)
+
+def extract_email_from_ipinfo(data):
+    """Extract useful information from IPinfo.io response."""
+    results = []
+    
+    if not data:
+        return results
+        
+    # Extract organization and domain info
+    if "org" in data:
+        results.append(f"Organization: {data['org']}")
+    
+    if "hostname" in data:
+        results.append(f"Hostname: {data['hostname']}")
+        
+        # Extract domain for potential email construction
+        hostname = data['hostname']
+        domain_parts = hostname.split('.')
+        if len(domain_parts) >= 2:
+            domain = f"{domain_parts[-2]}.{domain_parts[-1]}"
+            results.append(f"Domain: {domain}")
+            
+            # Suggest potential email addresses
+            results.append("Potential contact emails:")
+            potential_emails = [
+                f"admin@{domain}",
+                f"info@{domain}",
+                f"contact@{domain}",
+                f"support@{domain}",
+                f"abuse@{domain}"
+            ]
+            for email in potential_emails:
+                results.append(f"  - {email}")
+    
+    if "company" in data and "domain" in data["company"]:
+        company_domain = data["company"]["domain"]
+        results.append(f"Company domain: {company_domain}")
+        
+        # Suggest potential email addresses
+        results.append("Potential company contact emails:")
+        potential_emails = [
+            f"admin@{company_domain}",
+            f"info@{company_domain}",
+            f"contact@{company_domain}",
+            f"support@{company_domain}",
+            f"abuse@{company_domain}"
+        ]
+        for email in potential_emails:
+            results.append(f"  - {email}")
+    
+    return results
+
+def extract_email_from_abuseipdb(data):
+    """Extract useful information from AbuseIPDB response."""
+    results = []
+    
+    if not data or "data" not in data:
+        return results
+    
+    data = data["data"]
+    
+    # Extract domain info
+    if "domain" in data:
+        domain = data["domain"]
+        results.append(f"Domain: {domain}")
+        
+        # Suggest potential email addresses
+        results.append("Potential contact emails:")
+        potential_emails = [
+            f"admin@{domain}",
+            f"info@{domain}",
+            f"contact@{domain}",
+            f"support@{domain}",
+            f"abuse@{domain}"
+        ]
+        for email in potential_emails:
+            results.append(f"  - {email}")
+    
+    # Extract ISP info
+    if "isp" in data:
+        results.append(f"ISP: {data['isp']}")
+    
+    # Extract abuse contact email if available
+    if "abuseContactEmail" in data and data["abuseContactEmail"]:
+        results.append(f"Abuse contact email: {data['abuseContactEmail']}")
+    
+    return results
+
+def check_whois_for_email(ip_address):
+    """Check WHOIS information for email addresses."""
+    results = []
+    
+    try:
+        # Try using the python-whois library if available
+        import whois
+        whois_info = whois.whois(ip_address)
+        
+        # Extract emails from WHOIS data
+        if hasattr(whois_info, "emails") and whois_info.emails:
+            emails = whois_info.emails
+            if isinstance(emails, str):
+                emails = [emails]
+            
+            results.append("Emails found in WHOIS data:")
+            for email in emails:
+                results.append(f"  - {email}")
+        
+        # Extract registrar
+        if hasattr(whois_info, "registrar") and whois_info.registrar:
+            results.append(f"Registrar: {whois_info.registrar}")
+        
+        return results
+    except ImportError:
+        # If python-whois is not available, suggest manual lookup
+        results.append("WHOIS lookup requires the python-whois library.")
+        results.append("Install it with: pip install python-whois")
+        results.append("Or check manually at: whois.com or who.is")
+        return results
+    except Exception as e:
+        results.append(f"WHOIS lookup error: {str(e)}")
+        results.append("Try manual lookup at: whois.com or who.is")
+        return results
 
 if __name__ == "__main__":
     run_instagram_lookup()

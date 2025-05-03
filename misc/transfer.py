@@ -34,7 +34,7 @@ def excel_to_csv(excel_file, output_csv=None, sheet_name="Sheet1"):
             return None
         
         # Check if required columns exist
-        required_columns = ["Name", "NIK", "Place Work", "Address"]
+        required_columns = ["Name", "NIK", "Phone Number", "Address"]
         missing_columns = [col for col in required_columns if col not in df.columns]
         
         if missing_columns:

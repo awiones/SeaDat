@@ -1,8 +1,3 @@
-"""
-SeaDat - Deep Dive Search Module
-Provides advanced search capabilities for navigating the ocean of employee data.
-"""
-
 import os
 import csv
 import time
@@ -16,9 +11,9 @@ from tabulate import tabulate
 init(autoreset=True)
 
 # Configuration
-DATA_FILE = '/home/awion/SeaDat/data/data.csv'
+DATA_FILE = str(Path(__file__).resolve().parent.parent / "data" / "data.csv")
 
-VERSION = "1.0.0"  # <-- Change version here
+VERSION = "2.0.0" 
 
 # Ocean-themed ASCII art
 SEARCH_LOGO = r"""
@@ -98,7 +93,9 @@ def search_by_multiple_fields(search_term, data_file=DATA_FILE):
             next(file)  # skip index/empty header row
             reader = csv.DictReader(file)
             for row in reader:
-                for field, value in row.items():
+                # Only search in Name, NIK, Phone Number, Address
+                for field in ["Name", "NIK", "Phone Number", "Address"]:
+                    value = row.get(field, "")
                     if value and search_term in str(value).lower():
                         row_copy = dict(row)
                         row_copy['_matched_field'] = field
@@ -129,14 +126,14 @@ def display_results(results, search_term=""):
     print(f"\n{Fore.CYAN}🔍 Discovered {Fore.WHITE}{len(results)}{Fore.CYAN} matching records in the data ocean:\n")
     
     # Prepare table data
-    headers = ["Name", "NIK", "Place Work", "Address"]
+    headers = ["Name", "NIK", "Phone Number", "Address"]
     table_data = []
     
     for record in results:
         row = [
             highlight_match(record.get('Name', 'N/A'), search_term),
             highlight_match(record.get('NIK', 'N/A'), search_term),
-            highlight_match(record.get('Place Work', 'N/A'), search_term),
+            highlight_match(record.get('Phone Number', 'N/A'), search_term),
             highlight_match(record.get('Address', 'N/A'), search_term)
         ]
         table_data.append(row)

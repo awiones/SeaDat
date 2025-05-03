@@ -22,7 +22,7 @@ WAVE_PATTERNS = [
     "~~~~~~~~~~~~~~~~~~~~~~~~"
 ]
 
-VERSION = "1.0.0"
+VERSION = "2.0.0"
 
 # Enhanced SeaDat ASCII logo
 LOGO = """
@@ -64,10 +64,9 @@ def display_menu():
     print(Fore.CYAN + Style.BRIGHT + "\n🔱 NAVIGATION CHART:")
     print(Fore.BLUE + "~" * 50)
     print(Fore.WHITE + Style.BRIGHT + "1. " + Fore.CYAN + "🔍 Dive for Employee Data")
-    print(Fore.WHITE + Style.BRIGHT + "2. " + Fore.CYAN + "📥 Import New Data Streams")
-    print(Fore.WHITE + Style.BRIGHT + "3. " + Fore.CYAN + "📊 View Depth Report")
-    print(Fore.WHITE + Style.BRIGHT + "4. " + Fore.CYAN + "🌐 IP Address Track")
-    print(Fore.WHITE + Style.BRIGHT + "5. " + Fore.CYAN + "📸 Instagram Lookup")  # New option
+    print(Fore.WHITE + Style.BRIGHT + "2. " + Fore.CYAN + "🤖 AI Search" + Fore.YELLOW + " (new!)")  # Marked as new
+    print(Fore.WHITE + Style.BRIGHT + "3. " + Fore.CYAN + "🌐 IP Address Track")
+    print(Fore.WHITE + Style.BRIGHT + "4. " + Fore.CYAN + "📸 Instagram Lookup")
     print(Fore.WHITE + Style.BRIGHT + "q. " + Fore.CYAN + "🏝️  Return to Shore")
     print(Fore.BLUE + random_wave() * 2)
 
@@ -88,6 +87,21 @@ def execute_search():
     except ImportError as e:
         print(f"\n{Fore.RED}ERROR: search.py module not found!")
         print(f"{Fore.YELLOW}Make sure the search.py file is in the assets directory.")
+        print(f"{Fore.YELLOW}ImportError details: {e}")
+        input(f"\n{Fore.CYAN}Press Enter to continue...")
+    except Exception as e:
+        print(f"\n{Fore.RED}ERROR: {str(e)}")
+        input(f"\n{Fore.CYAN}Press Enter to continue...")
+
+def execute_ai_search():
+    """Execute the AI Search module."""
+    try:
+        loading_indicator("🤖 Activating AI Search")
+        from assets.ai_search import run_ai_search
+        run_ai_search()
+    except ImportError as e:
+        print(f"\n{Fore.RED}ERROR: ai_search.py module not found!")
+        print(f"{Fore.YELLOW}Make sure the ai_search.py file is in the assets directory.")
         print(f"{Fore.YELLOW}ImportError details: {e}")
         input(f"\n{Fore.CYAN}Press Enter to continue...")
     except Exception as e:
@@ -131,17 +145,15 @@ def main():
         display_header()
         display_menu()
         
-        choice = input(f"\n{Fore.CYAN}⚓ Enter your navigation choice (1-5 or q): ").strip().lower()
+        choice = input(f"\n{Fore.CYAN}⚓ Enter your navigation choice (1-4 or q): ").strip().lower()
         
         if choice == '1':
             execute_search()
         elif choice == '2':
-            import_data()
+            execute_ai_search()
         elif choice == '3':
-            view_report()
-        elif choice == '4':
             execute_ip_track()
-        elif choice == '5':
+        elif choice == '4':
             execute_instagram_lookup()
         elif choice == 'q':
             print(f"\n{Fore.CYAN}Thank you for exploring the Sea of Data. Safe journey back to shore!")
@@ -155,7 +167,7 @@ def main():
 
 if __name__ == "__main__":
     # Ensure the data directory exists
-    data_dir = Path('/home/awion/SeaDat/data')
+    data_dir = Path(project_root) / "data"
     if not data_dir.exists():
         try:
             data_dir.mkdir(parents=True, exist_ok=True)
