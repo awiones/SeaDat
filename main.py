@@ -64,9 +64,10 @@ def display_menu():
     print(Fore.CYAN + Style.BRIGHT + "\n🔱 NAVIGATION CHART:")
     print(Fore.BLUE + "~" * 50)
     print(Fore.WHITE + Style.BRIGHT + "1. " + Fore.CYAN + "🔍 Dive for Employee Data")
-    print(Fore.WHITE + Style.BRIGHT + "2. " + Fore.CYAN + "🤖 AI Search" + Fore.YELLOW + " (new!)")  # Marked as new
+    print(Fore.WHITE + Style.BRIGHT + "2. " + Fore.CYAN + "🤖 AI Search")
     print(Fore.WHITE + Style.BRIGHT + "3. " + Fore.CYAN + "🌐 IP Address Track")
     print(Fore.WHITE + Style.BRIGHT + "4. " + Fore.CYAN + "📸 Instagram Lookup")
+    print(Fore.WHITE + Style.BRIGHT + "5. " + Fore.CYAN + "👤 Face Search" + Fore.YELLOW + " (new!)")
     print(Fore.WHITE + Style.BRIGHT + "q. " + Fore.CYAN + "🏝️  Return to Shore")
     print(Fore.BLUE + random_wave() * 2)
 
@@ -138,6 +139,21 @@ def execute_instagram_lookup():
         print(f"\n{Fore.RED}ERROR: {str(e)}")
         input(f"\n{Fore.CYAN}Press Enter to continue...")
 
+def execute_image_search():
+    """Execute the Image Search module."""
+    try:
+        loading_indicator("🔍 Activating Face Search")
+        from assets.image_search import run_image_search
+        run_image_search()
+    except ImportError as e:
+        print(f"\n{Fore.RED}ERROR: image_search.py module not found!")
+        print(f"{Fore.YELLOW}Make sure the image_search.py file is in the assets directory.")
+        print(f"{Fore.YELLOW}ImportError details: {e}")
+        input(f"\n{Fore.CYAN}Press Enter to continue...")
+    except Exception as e:
+        print(f"\n{Fore.RED}ERROR: {str(e)}")
+        input(f"\n{Fore.CYAN}Press Enter to continue...")
+
 def main():
     """Main function to run the SeaDat tool."""
     
@@ -145,7 +161,7 @@ def main():
         display_header()
         display_menu()
         
-        choice = input(f"\n{Fore.CYAN}⚓ Enter your navigation choice (1-4 or q): ").strip().lower()
+        choice = input(f"\n{Fore.CYAN}⚓ Enter your navigation choice (1-5 or q): ").strip().lower()
         
         if choice == '1':
             execute_search()
@@ -155,6 +171,8 @@ def main():
             execute_ip_track()
         elif choice == '4':
             execute_instagram_lookup()
+        elif choice == '5':
+            execute_image_search()
         elif choice == 'q':
             print(f"\n{Fore.CYAN}Thank you for exploring the Sea of Data. Safe journey back to shore!")
             for i in range(3):

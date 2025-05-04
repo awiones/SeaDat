@@ -12,3 +12,7 @@ __pycache__/
 __pycache__
 *.py[cod]
 .env
+logs/
+results/
+training.py
+download_dataset.py

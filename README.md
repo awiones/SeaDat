@@ -13,6 +13,8 @@ SeaDat is a free tool designed to showcase how one could search, analyze, and vi
 - **AI Search:** Use natural language queries powered by GPT-4o (via aimlapi.com) to find and analyze data.
 - **IP Address Tracker:** Lookup IP address information, including geolocation and network details.
 - **Instagram Profile Lookup:** Retrieve public Instagram profile information using multiple scraping methods.
+- **Image Search (Face Recognition):** Search for faces in images using a simple face recognition system.
+  - **Note:** The included training dataset is very simple and only contains 6 people: `tupac shakur`, `21 savage`, `50 Cent`, `donald trump`, `joe biden`, and `eminem` (as stored in `face_db_cache.pkl`).
 
 ---
 
