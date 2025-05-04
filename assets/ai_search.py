@@ -31,7 +31,7 @@ DATA_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "da
 API_KEY = os.getenv('AIMLAPI_KEY')
 API_BASE_URL = "https://api.aimlapi.com/v1"
 
-VERSION = "2.0.0"
+VERSION = "3.0.0"
 
 # Initialize OpenAI client
 client = OpenAI(

@@ -13,7 +13,7 @@ init(autoreset=True)
 # Configuration
 DATA_FILE = str(Path(__file__).resolve().parent.parent / "data" / "data.csv")
 
-VERSION = "2.0.0" 
+VERSION = "3.0.0" 
 
 # Ocean-themed ASCII art
 SEARCH_LOGO = r"""

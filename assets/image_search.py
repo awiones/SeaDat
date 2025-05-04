@@ -32,7 +32,7 @@ init(autoreset=True)
 
 # Configuration
 DATA_FILE = str(Path(__file__).resolve().parent.parent / "data" / "data.csv")
-VERSION = "1.0.0"
+VERSION = "3.0.0"
 
 # Ocean-themed ASCII art with camera emphasis
 IMAGE_SEARCH_LOGO = r"""
@@ -63,6 +63,7 @@ def display_image_search_header():
     print(Fore.CYAN + Style.BRIGHT + IMAGE_SEARCH_LOGO)
     print(Fore.WHITE + Style.BRIGHT + f"Created by awiones")
     print(Fore.WHITE + Style.BRIGHT + f"Version: {VERSION}")
+    print(Fore.MAGENTA + Style.BRIGHT + "SeaDat AI powered by Facenet512")
     print(Fore.BLUE + "~" * 50)
     current_time = datetime.now().strftime("%H:%M:%S")
     print(f"{Fore.CYAN}Dive Time: {Fore.WHITE}{current_time}{Fore.CYAN} | Face Scanner Active")
